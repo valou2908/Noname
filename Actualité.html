@@ -129,6 +129,12 @@ async function chargerIssues() {
         zone.innerHTML = "<p>Erreur lors du chargement.</p>";
     }
 }
+}
+            // Demander la permission dès le chargement
+if ("Notification" in window) {
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+    Notification.requestPermission();
+}
 
 chargerIssues();
 setInterval(chargerIssues, 300000);
