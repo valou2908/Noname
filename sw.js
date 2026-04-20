@@ -1,44 +1,31 @@
-// Nom du cache et intervalle
-const CACHE_NAME = 'eco-app-v1';
-
+// Force la mise à jour immédiate
 self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
+// Prend le contrôle dès l'activation
 self.addEventListener('activate', (event) => {
     event.waitUntil(clients.claim());
 });
 
-// --- SURVEILLANCE EN ARRIÈRE-PLAN ---
-// Note : Le navigateur décide de la fréquence, mais on peut forcer une vérification au clic
-async function verifierNouvellesIssues() {
-    try {
-        const res = await fetch("https://api.github.com/repos/valou2908/EcoApp/issues?per_page=1");
-        const issues = await res.json();
-        
-        if (issues.length > 0) {
-            const derniereIssue = issues[0];
-            // On récupère l'ID de la dernière issue connue
-            const lastId = await Promise.resolve(localStorage.getItem('last_issue_id'));
-
-            if (derniereIssue.id.toString() !== lastId) {
-                self.registration.showNotification("Nouvelle Actualité !", {
-                    body: derniereIssue.title,
-                    icon: "Icone.png",
-                    data: { url: "Actualité.html" }
-                });
-                // Note : localStorage n'est pas dispo dans le SW, 
-                // il faudrait utiliser IndexedDB pour un vrai mode background total,
-                // mais pour commencer, restons sur la logique simple.
-            }
-        }
-    } catch (e) { console.log("Erreur check background"); }
-}
-
-// Gérer le clic
+// Gère le clic sur la notification
 self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
+    const notification = event.notification;
+    const urlToOpen = notification.data?.url || 'Actualité.html';
+
+    notification.close();
+
     event.waitUntil(
-        clients.openWindow('Actualité.html')
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then((windowClients) => {
+                for (let client of windowClients) {
+                    if (client.url.includes(urlToOpen) && 'focus' in client) {
+                        return client.focus();
+                    }
+                }
+                if (clients.openWindow) {
+                    return clients.openWindow(urlToOpen);
+                }
+            })
     );
 });
