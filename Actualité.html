@@ -56,7 +56,7 @@
         </div>
         
         <div id="zone-publi" style="display:none; margin-top:20px;">
-            <a class="btn" href="https://github.com/valou2908/EcoApp/issues" target="_blank">Modifier le Mots de Passe</a>
+            <a class="btn" href="https://github.com/valou2908/EcoApp/issues" target="_blank">Créer une Issue sur GitHub</a>
         </div>
     </section>
 
@@ -76,9 +76,23 @@
 </nav>
 
 <script>
+// --- CONFIGURATION ET PERMISSIONS ---
 const SECRET = "RWNvMjAyNS8yNg=="; 
 marked.setOptions({ breaks: true, gfm: true });
 
+// Demander la permission pour les notifications au chargement
+if ("Notification" in window) {
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
+}
+
+// Enregistrement du Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
+
+// --- FONCTIONS INTERFACE ---
 function ouvrirMdp() {
     document.getElementById("zone-mdp").style.display = "flex";
     document.getElementById("btn-admin").style.display = "none";
@@ -92,6 +106,7 @@ function verifier() {
     } else { alert("Code incorrect"); }
 }
 
+// --- LOGIQUE DE CHARGEMENT ET NOTIFICATION ---
 async function chargerIssues() {
     const zone = document.getElementById("issues");
     try {
@@ -99,6 +114,21 @@ async function chargerIssues() {
         const issues = await res.json();
         
         if (!Array.isArray(issues)) throw new Error("Erreur API");
+
+        // Vérification pour notification
+        const ancienNb = parseInt(localStorage.getItem('nb_issues_eco')) || 0;
+        
+        // Si nouveaux articles et permission accordée
+        if (issues.length > ancienNb && Notification.permission === "granted") {
+            const derniereIssue = issues[0];
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("Nouvel article éco !", {
+                    body: derniereIssue.title,
+                    icon: "Icone.png",
+                    data: { url: "Actualité.html" }
+                });
+            });
+        }
         
         zone.innerHTML = "";
         if (issues.length === 0) {
@@ -121,22 +151,18 @@ async function chargerIssues() {
             zone.appendChild(post);
         });
 
-        // On enregistre le nouveau nombre et on cache le badge vu qu'on est sur la page
+        // Mise à jour du stockage et masquage du badge car on est sur la page
         localStorage.setItem('nb_issues_eco', issues.length);
         document.querySelectorAll('.badge').forEach(b => b.style.display = 'none');
 
     } catch (e) { 
-        zone.innerHTML = "<p>Erreur lors du chargement.</p>";
+        zone.innerHTML = "<p>Erreur lors du chargement des actualités.</p>";
     }
 }
-}
-            // Demander la permission dès le chargement
-if ("Notification" in window) {
-    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-    Notification.requestPermission();
-}
 
+// Lancement initial
 chargerIssues();
+// Vérification automatique toutes les 5 minutes
 setInterval(chargerIssues, 300000);
 </script>
 </body>
