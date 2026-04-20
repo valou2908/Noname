@@ -1,4 +1,4 @@
-// Force la mise à jour immédiate du Service Worker sans attendre la fermeture des onglets
+// Force la mise à jour immédiate
 self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
@@ -8,22 +8,23 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(clients.claim());
 });
 
+// Gestion du clic sur la notification
 self.addEventListener('notificationclick', (event) => {
     const notification = event.notification;
-    const urlToOpen = notification.data?.url || 'forum.html'; // Utilise l'URL passée dans les data ou par défaut
+    const urlToOpen = notification.data?.url || 'Actualité.html';
 
     notification.close();
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then((windowClients) => {
-                // 1. Vérifie si l'onglet est déjà ouvert
+                // Si un onglet est déjà ouvert, on le focus
                 for (let client of windowClients) {
                     if (client.url.includes(urlToOpen) && 'focus' in client) {
                         return client.focus();
                     }
                 }
-                // 2. Si aucun onglet n'est ouvert, on en crée un nouveau
+                // Sinon on ouvre une nouvelle fenêtre
                 if (clients.openWindow) {
                     return clients.openWindow(urlToOpen);
                 }
