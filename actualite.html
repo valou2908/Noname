@@ -107,16 +107,17 @@
 const SECRET = "RWNvMjAyNS8yNg==";
 let deferredPrompt;
 
-// --- 1. GESTION PWA ET NOTIFICATIONS ---
-
-// Capture l'événement d'installation
+// 1. CAPTURER L'INSTALLATION
+// Cet événement est indispensable pour que le bouton "Installer" fonctionne
 window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
+    e.preventDefault(); // Empêche l'affichage automatique du navigateur
+    deferredPrompt = e; // Stocke l'événement pour l'utiliser plus tard
+    console.log("L'application est prête à être installée");
 });
 
 async function initNotifications() {
     if (!("Notification" in window)) return;
+    // Si l'utilisateur n'a pas encore répondu, on montre ton bandeau
     if (Notification.permission === "default") {
         creerBandeauInvitation();
     }
@@ -136,28 +137,36 @@ function creerBandeauInvitation() {
     document.body.appendChild(banner);
 }
 
+// 2. ACTION DU BOUTON : NOTIF PUIS INSTALLATION
 async function accepterTout() {
-    // Demander notification
+    // Étape A : Demander la permission pour les notifications
     const permission = await Notification.requestPermission();
     
-    // Proposer installation si disponible
+    // Étape B : Si le navigateur est prêt, on lance l'installation de l'app
     if (deferredPrompt) {
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
-        deferredPrompt = null;
+        deferredPrompt.prompt(); // Affiche la fenêtre d'installation officielle
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`Choix utilisateur : ${outcome}`);
+        deferredPrompt = null; // On vide la mémoire
+    } else {
+        console.log("Le navigateur ne permet pas encore l'installation (attends quelques secondes).");
     }
 
+    // Étape C : Confirmation visuelle
     if (permission === "granted") {
         const reg = await navigator.serviceWorker.ready;
         reg.showNotification("Eco-Délégués H.R.", {
             body: "Notifications activées !",
-            icon: "icone.png" // On enlève "Picture/" ici aussi
+            icon: "icone.png" 
         });
     }
-    document.getElementById("notif-banner").remove();
+    
+    // On enlève ton bandeau noir
+    const banner = document.getElementById("notif-banner");
+    if(banner) banner.remove();
 }
 
-// --- 2. CHARGEMENT GITHUB ---
+// --- CHARGEMENT GITHUB ET ADMIN (Inchangé) ---
 
 async function chargerIssues() {
     const zone = document.getElementById("issues");
@@ -178,7 +187,6 @@ async function chargerIssues() {
             zone.appendChild(post);
         });
 
-        // Gestion du badge
         const ancienNombre = localStorage.getItem('nb_issues_eco') || 0;
         if (issues.length > ancienNombre) {
             document.querySelectorAll('.badge').forEach(b => b.style.display = 'inline-block');
@@ -188,11 +196,11 @@ async function chargerIssues() {
     } catch (e) { zone.innerHTML = "<p>Erreur de chargement.</p>"; }
 }
 
-// --- 3. ADMIN ---
 function ouvrirMdp() {
     document.getElementById("zone-mdp").style.display = "flex";
     document.getElementById("btn-admin").style.display = "none";
 }
+
 function verifier() {
     if (btoa(document.getElementById("mdp").value) === SECRET) {
         document.getElementById("zone-publi").style.display = "block";
@@ -200,9 +208,12 @@ function verifier() {
     } else { alert("Code incorrect"); }
 }
 
+// 3. LANCEMENT AU CHARGEMENT
 window.onload = () => {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            console.log("Service Worker OK");
+        });
     }
     chargerIssues();
     initNotifications();
