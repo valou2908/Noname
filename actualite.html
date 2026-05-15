@@ -151,7 +151,7 @@ async function accepterTout() {
         const reg = await navigator.serviceWorker.ready;
         reg.showNotification("Eco-Délégués H.R.", {
             body: "Notifications activées !",
-            icon: "Picture/icone.png"
+            icon: "icone.png" // On enlève "Picture/" ici aussi
         });
     }
     document.getElementById("notif-banner").remove();
