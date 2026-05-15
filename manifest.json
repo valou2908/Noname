@@ -1,0 +1,21 @@
+{
+  "name": "Eco-Délégués H.R.",
+  "short_name": "EcoApp",
+  "description": "Suivez les engagements écologiques de H.R.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2e7d32",
+  "icons": [
+    {
+      "src": "Picture/icone.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "Picture/icone.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

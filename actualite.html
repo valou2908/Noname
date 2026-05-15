@@ -1,0 +1,212 @@
+<!DOCTYPE html> 
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="icone.png">
+    <link rel="manifest" href="manifest.json">
+    <title>Actualité</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        #issues { display: flex; flex-direction: column; gap: 20px; }
+        .post { 
+            background: #ffffff; 
+            padding: 25px; 
+            border-left: 8px solid var(--primary); 
+            border-radius: 12px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            animation: fadeIn 0.5s ease; 
+        }
+        .post h3 { margin: 10px 0; color: var(--primary); font-size: 1.4rem; }
+        .post img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; }
+        .skeleton { 
+            height: 120px; 
+            background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%); 
+            background-size: 200% 100%; 
+            animation: loading 1.5s infinite; 
+            border-radius: 12px; 
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes loading { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+        #notif-banner {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-size: 0.9rem;
+        }
+        .btn-notif {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="nav-pc">
+    <a href="index.html">Accueil</a>
+    <a href="actualite.html" class="active">Actualité <span id="badge-pc" class="badge" style="display:none;">NOUVEAU</span></a>
+    <a href="objectifs.html">Les objectifs</a>
+    <a href="noussommes.html">Qui sommes Nous ?</a>
+</nav>
+
+<header class="header">
+    <h1>Actualité</h1>
+    <p>Le journal de bord de nos engagements écologiques</p>
+</header>
+
+<main class="container">
+    <section class="card">
+        <h2>Espace Modification</h2>
+        <button class="btn" id="btn-admin" onclick="ouvrirMdp()" style="margin-top: 10px;">Publier un article</button>
+        <div id="zone-mdp" style="display:none; margin-top:15px; gap: 10px; flex-wrap: wrap;">
+            <input type="password" id="mdp" placeholder="Code d'accès" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+            <button class="btn" onclick="verifier()">Accéder</button>
+        </div>
+        <div id="zone-publi" style="display:none; margin-top:20px;">
+            <a class="btn" href="https://github.com/valou2908/EcoApp/issues" target="_blank">Accéder à l'éditeur GitHub</a>
+        </div>
+    </section>
+
+    <section>
+        <h2 style="padding-left: 10px; margin-top: 30px;">Dernières nouvelles</h2>
+        <div id="issues">
+            <div class="skeleton"></div>
+            <div class="skeleton" style="margin-top:20px;"></div>
+        </div>
+    </section>
+</main>
+
+<nav class="nav-mobile">
+    <a href="index.html">🏠<br>Accueil</a>
+    <a href="actualite.html" class="active">💬<br>Actualité <span class="badge" style="display:none;">!</span></a>
+    <a href="objectifs.html">🏆<br>Objectifs</a>
+    <a href="noussommes.html">👥<br>Qui sommes nous</a>
+</nav>
+
+<script>
+const SECRET = "RWNvMjAyNS8yNg==";
+let deferredPrompt;
+
+// --- 1. GESTION PWA ET NOTIFICATIONS ---
+
+// Capture l'événement d'installation
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+});
+
+async function initNotifications() {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "default") {
+        creerBandeauInvitation();
+    }
+}
+
+function creerBandeauInvitation() {
+    if (document.getElementById("notif-banner")) return;
+    const banner = document.createElement('div');
+    banner.id = "notif-banner";
+    banner.innerHTML = `
+        <span>Installer l'app pour les alertes ?</span>
+        <div style="display:flex;">
+            <button class="btn-notif" onclick="accepterTout()">Installer</button>
+            <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:#aaa; margin-left:10px; cursor:pointer;">Plus tard</button>
+        </div>
+    `;
+    document.body.appendChild(banner);
+}
+
+async function accepterTout() {
+    // Demander notification
+    const permission = await Notification.requestPermission();
+    
+    // Proposer installation si disponible
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+    }
+
+    if (permission === "granted") {
+        const reg = await navigator.serviceWorker.ready;
+        reg.showNotification("Eco-Délégués H.R.", {
+            body: "Notifications activées !",
+            icon: "Picture/icone.png"
+        });
+    }
+    document.getElementById("notif-banner").remove();
+}
+
+// --- 2. CHARGEMENT GITHUB ---
+
+async function chargerIssues() {
+    const zone = document.getElementById("issues");
+    try {
+        const res = await fetch("https://api.github.com/repos/valou2908/EcoApp/issues?per_page=10");
+        const issues = await res.json();
+        zone.innerHTML = "";
+        
+        issues.forEach(issue => {
+            const date = new Date(issue.created_at).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long'});
+            const post = document.createElement('article');
+            post.className = 'post';
+            post.innerHTML = `
+                <small style="color:var(--primary); font-weight:bold;">${date}</small>
+                <h3>${issue.title}</h3>
+                <div class="content">${marked.parse(issue.body || "")}</div>
+            `;
+            zone.appendChild(post);
+        });
+
+        // Gestion du badge
+        const ancienNombre = localStorage.getItem('nb_issues_eco') || 0;
+        if (issues.length > ancienNombre) {
+            document.querySelectorAll('.badge').forEach(b => b.style.display = 'inline-block');
+        }
+        localStorage.setItem('nb_issues_eco', issues.length);
+
+    } catch (e) { zone.innerHTML = "<p>Erreur de chargement.</p>"; }
+}
+
+// --- 3. ADMIN ---
+function ouvrirMdp() {
+    document.getElementById("zone-mdp").style.display = "flex";
+    document.getElementById("btn-admin").style.display = "none";
+}
+function verifier() {
+    if (btoa(document.getElementById("mdp").value) === SECRET) {
+        document.getElementById("zone-publi").style.display = "block";
+        document.getElementById("zone-mdp").style.display = "none";
+    } else { alert("Code incorrect"); }
+}
+
+window.onload = () => {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
+    chargerIssues();
+    initNotifications();
+};
+</script>
+</body>
+</html>
