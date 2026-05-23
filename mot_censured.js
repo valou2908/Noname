@@ -1,13 +1,13 @@
 // Liste officielle des mots interdits (mots séparés par des tirets pour éviter les blocages)
 const motsMasques = [
     // --- Insultes classiques & variantes ---
-    "merde", "mrd", "merdes", "merdeux", "merdique", "emmerde", "emmerdes", "emmerder",
+    "mrd", "merdes", "merdeux", "merdique", "emmerde", "emmerdes", "emmerder",
     "con", "cons", "connard", "connards", "conard", "conards", "connasse", "connasses",
     "conasse", "conasses", "salope", "salopes", "salop", "salops", "salopard", "salopards",
     "putain", "putn", "ptn", "putains", "pute", "putes", "putainn", "chier", "chiant",
     "chiante", "chiants", "chiantes", "chr", "batard", "bâtard", "batards", "bâtards",
     "crevard", "crevards", "fumier", "fumiers", "ordure", "ordures", "raclure", "raclures",
-    "vermine", "vermines", "pourriture", "pourritures", "dechet", "déchet", "dechets", "déchets",
+    "vermine", "vermines", "pourriture", "pourritures",
     "rebut", "rebuts", "lache", "lâche", "traitre", "traître", "traitres", "traîtres",
     "minable", "minables", "nul", "nulle", "nuls", "nulles", "naze", "nazes",
     "loser", "losers", "raté", "rate", "ratés", "rates", "inutile", "inutiles",
