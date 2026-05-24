@@ -1,0 +1,243 @@
+<!DOCTYPE html> 
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="icone.png">
+    <title>Espace Discussion</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+
+<nav class="nav-pc">
+    <a href="index.html">Accueil</a>
+    <a href="actualite.html">Actualité</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="tchat.html" class="active">Discussion</a>
+    <a href="objectifs.html">Les objectifs</a>
+    <a href="noussommes.html">Qui sommes Nous ?</a>
+</nav>
+
+<header class="header">
+    <h1>Espace Discussion</h1>
+    <p>Échangez anonymement et librement</p>
+</header>
+
+<main class="container">
+    <section class="card">
+        <h2>Espace Modération</h2>
+        <p style="font-size: 0.9rem; color: #666;">Réservé aux membres des éco-délégués de H.R. pour gérer et modérer les messages du chat.</p>
+        <button class="btn" id="btn-admin" style="margin-top: 10px;">Accéder aux outils de modération</button>
+        
+        <div id="zone-mdp" style="display:none; margin-top:15px; gap: 10px; flex-wrap: wrap;">
+            <input type="password" id="mdp" placeholder="Code d'accès…" class="mdp-input">
+            <button class="btn" id="btn-valider-mdp">Valider</button>
+        </div>
+            
+        <div id="zone-publi" style="display:none; margin-top:24px;">
+            <div class="admin-mod-header">
+                <h3 class="admin-mod-title">🗑️ Liste des messages</h3>
+                <button class="btn" id="admin-delete-all-btn" style="background: #dc3545; padding: 6px 12px; font-size: 0.85rem;">⚠️ Tout Supprimer</button>
+            </div>
+            <div class="admin-msg-list" id="admin-liste-messages">
+                <p style="color:#666; font-style:italic;">Aucun message à charger.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="chat-layout">
+        <section class="chat-section">
+            <h2 style="margin-bottom: 15px;">💬 Messagerie Publique Anonyme</h2>
+            
+            <div id="chat-warning">⚠️ Attention : Votre message contenait des propos inappropriés et a été censuré.</div>
+            
+            <div id="chat-box">Chargement de la messagerie...</div>
+            <div class="chat-input-container">
+                <input type="text" id="chat-message-input" placeholder="Écris un message anonyme..." maxlength="250">
+                <button class="btn btn-success" id="chat-send-btn">Envoyer</button>
+            </div>
+        </section>
+    </div>
+</main>
+
+<nav class="nav-mobile">
+    <a href="index.html">🏠<br>Accueil</a>
+    <a href="actualite.html">💬<br>Actualité <span class="badge" style="display:none;">!</span></a>
+    <a href="quiz.html">❓<br>Quiz</a>
+    <a href="tchat.html" class="active">💬<br>Discussion</a>
+    <a href="objectifs.html">🏆<br>Objectifs</a>
+    <a href="noussommes.html">👥<br>Qui sommes nous</a>
+</nav>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, serverTimestamp, query, get, remove } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+    
+    // IMPORTATION DES MOTS DEPUIS TON FICHIER SÉPARÉ
+    import { motsInterdits } from "./mot_censured.js";
+
+    // Configuration Firebase officielle de ton projet ecodeleguer-app
+    const firebaseConfig = {
+        apiKey: "AIzaSyAeAfkNfQHi3rRmWZifT6NQva6pW-AkzlU",
+        authDomain: "ecodeleguer-app.firebaseapp.com",
+        databaseURL: "https://ecodeleguer-app-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "ecodeleguer-app",
+        storageBucket: "ecodeleguer-app.firebasestorage.app",
+        messagingSenderId: "894124457375",
+        appId: "1:894124457375:web:851f0cf131a5466b6f51aa",
+        measurementId: "G-BY1ZYKBRC0"
+    };
+
+    // Initialisation
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const messagesRef = ref(db, 'messages');
+
+    // Génération du pseudo de l'élève pour la session
+    const anonymousName = "Anonyme_" + Math.floor(1000 + Math.random() * 9000);
+
+    // Écouter les messages en temps réel (Affiche dans le chat + Espace Admin)
+    onValue(messagesRef, (snapshot) => {
+        const chatBox = document.getElementById("chat-box");
+        const adminMsgList = document.getElementById("admin-liste-messages");
+        
+        chatBox.innerHTML = ""; 
+        adminMsgList.innerHTML = ""; 
+        
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            
+            Object.keys(data).forEach((key) => {
+                const msg = data[key];
+                
+                // 1. Remplissage de la messagerie publique
+                const msgElement = document.createElement("div");
+                msgElement.className = "chat-message";
+                msgElement.innerHTML = `<div><span class="chat-author">${msg.user}</span><span class="chat-text">${msg.text}</span></div>`;
+                chatBox.appendChild(msgElement);
+
+                // 2. Remplissage de l'espace de modération (Bouton Supprimer)
+                const adminElement = document.createElement("div");
+                adminElement.className = "admin-msg-item";
+                adminElement.innerHTML = `
+                    <span><strong>${msg.user}:</strong> ${msg.text}</span>
+                    <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; background:#dc3545;" data-id="${key}">Supprimer</button>
+                `;
+                adminMsgList.appendChild(adminElement);
+            });
+            
+            // Lier l'action de suppression directe sans confirmation
+            adminMsgList.querySelectorAll('.btn-danger').forEach(btn => {
+                btn.onclick = () => supprimerMessageUnique(btn.getAttribute('data-id'));
+            });
+
+            chatBox.scrollTop = chatBox.scrollHeight; 
+        } else {
+            chatBox.innerHTML = "<p style='text-align:center; color:#999; font-size:0.9em;'>Aucun message. Lance la discussion !</p>";
+            adminMsgList.innerHTML = "<p style='color:#666; font-style:italic; padding:5px;'>Aucun message sur le serveur.</p>";
+        }
+    });
+
+    // Envoyer un message (Avec filtrage automatique par symbole #)
+    async function sendChatMessage() {
+        const input = document.getElementById("chat-message-input");
+        let text = input.value.trim();
+        const warningBox = document.getElementById("chat-warning");
+        
+        if (text !== "") {
+            let messageAChange = false;
+
+            // Analyse du texte avec le dictionnaire importé de mot_censured.js
+            motsInterdits.forEach((mot) => {
+                const regex = new RegExp(`\\b${mot}\\b`, "gi");
+                if (regex.test(text)) {
+                    text = text.replace(regex, "#".repeat(mot.length));
+                    messageAChange = true;
+                }
+            });
+
+            // Si le message a été modifié, on affiche l'alerte d'attention pendant 5 secondes
+            if (messageAChange) {
+                warningBox.style.display = "block";
+                setTimeout(() => {
+                    warningBox.style.display = "none";
+                }, 5000);
+            }
+            
+            // Envoi du message (filtré ou non) vers Firebase
+            await push(messagesRef, {
+                user: anonymousName,
+                text: text,
+                timestamp: serverTimestamp()
+            });
+            input.value = ""; 
+
+            // Limiteur automatique de sécurité à 50 messages maximum
+            const maxMessages = 50;
+            get(query(messagesRef)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const totalMessages = Object.keys(snapshot.val());
+                    if (totalMessages.length > maxMessages) {
+                        const messagesToDelete = totalMessages.slice(0, totalMessages.length - maxMessages);
+                        messagesToDelete.forEach((key) => {
+                            remove(ref(db, `messages/${key}`));
+                        });
+                    }
+                }
+            });
+        }
+    }
+
+    // Supprimer un message un par un instantanément (Sans message de confirmation)
+    function supprimerMessageUnique(messageId) {
+        const specificRef = ref(db, `messages/${messageId}`);
+        remove(specificRef).catch(() => {
+            alert("Erreur lors de la suppression.");
+        });
+    }
+
+    // Tout supprimer de la base de données d'un coup
+    function supprimerToutLeChat() {
+        if(confirm("💥 ATTENTION : Tu vas effacer INTÉGRALEMENT l'historique de la messagerie. Continuer ?")) {
+            remove(messagesRef).then(() => {
+                alert("La base de données a été réinitialisée avec succès !");
+            }).catch(() => {
+                alert("Erreur lors de la suppression complète.");
+            });
+        }
+    }
+
+    /* --- SYSTÈME DE VÉRIFICATION DU MOT DE PASSE INTÉGRÉ --- */
+    const SECRET = "RWNvMjAyNS8yNg=="; // Ton code secret chiffré en Base64
+
+    function ouvrirMdp() {
+        document.getElementById("zone-mdp").style.display = "flex";
+        document.getElementById("btn-admin").style.display = "none";
+    }
+
+    function verifier() {
+        const input = document.getElementById("mdp").value;
+        if (btoa(input) === SECRET) {
+            document.getElementById("zone-publi").style.display = "block";
+            document.getElementById("zone-mdp").style.display = "none";
+        } else { 
+            alert("Code incorrect"); 
+        }
+    }
+
+    // Liaison des événements de messagerie
+    document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
+    document.getElementById("chat-message-input").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendChatMessage();
+    });
+    document.getElementById("admin-delete-all-btn").addEventListener("click", supprimerToutLeChat);
+
+    // Liaison propre des événements du panneau d'administration
+    document.getElementById("btn-admin").addEventListener("click", ouvrirMdp);
+    document.getElementById("btn-valider-mdp").addEventListener("click", verifier);
+    document.getElementById("mdp").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") verifier();
+    });
+</script>
+</body>
+</html>
