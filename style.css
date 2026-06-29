@@ -546,9 +546,6 @@ textarea { width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 10p
         .chat-message { margin-bottom: 12px; padding: 10px; border-radius: 8px; background: #f1f0f0; display: flex; justify-content: space-between; align-items: flex-start; }
         .chat-author { font-weight: bold; color: var(--primary); display: block; font-size: 0.85em; margin-bottom: 3px; }
         .chat-text { color: var(--text-color); word-wrap: break-word; }
-        .chat-input-container { display: flex; gap: 8px; }
-        .chat-input-container input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 20px; outline: none; padding-left: 15px; }
-        .chat-input-container input:focus { border-color: var(--primary); }
         
         /* Message d'attention de la modération */
         #chat-warning { display: none; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.9rem; text-align: center; font-weight: bold; }
@@ -611,3 +608,25 @@ textarea { width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 10p
             font-weight: bold;
             margin-left: 10px;
         }
+        /* --- AJUSTEMENT ZONE ENVOI MESSAGERIE --- */
+.chat-input-container {
+    display: flex;       /* Aligne l'input et le bouton sur la même ligne */
+    gap: 10px;           /* Crée un espace propre entre l'input et le bouton */
+    width: 100%;         /* S'assure que la zone prend toute la largeur du conteneur */
+    margin-top: 15px;    /* Espace par rapport à la boîte de chat */
+}
+
+#chat-message-input {
+    flex: 1;             /* Permet à l'input de prendre tout l'espace disponible restant */
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    min-width: 0;        /* Empêche l'input de casser le layout Flexbox sur les très petits écrans */
+}
+
+#chat-send-btn {
+    white-space: nowrap; /* Empêche le mot "Envoyer" de se couper ou d'aller à la ligne */
+    padding: 12px 20px;  /* Ajuste le bouton pour qu'il s'aligne en hauteur avec l'input */
+}
