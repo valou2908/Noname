@@ -92,6 +92,11 @@ body {
     box-shadow: var(--shadow);
 }
 
+video {
+    max-width: 100%;
+    height: auto;
+}
+
 /* --- NAVIGATION MOBILE (STRICTE) --- */
 .nav-mobile {
     display: none; 
@@ -259,6 +264,7 @@ textarea { width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 10p
             display: flex;
             justify-content: space-between;
             align-items: center;
+            animation: fadeIn 0.5s ease; 
         }
         .quiz-item-btn:hover {
             transform: translateX(5px);
@@ -541,7 +547,7 @@ textarea { width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 10p
         /* Styles pour la zone de messagerie */
         .chat-layout { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 30px; }
         .chat-section { background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: var(--shadow); position: relative; }
-        #chat-box { height: 350px; border: 1px solid #ddd; overflow-y: auto; padding: 15px; margin-bottom: 15px; background: #fcfcfc; border-radius: 8px; }
+        #chat-box { height: 350px; border: 1px solid #ddd; overflow-y: auto; padding: 15px; margin: 15px auto; background: #fcfcfc; border-radius: 8px; }
         .chat-message { margin-bottom: 12px; padding: 10px; border-radius: 8px; background: #f1f0f0; display: flex; justify-content: space-between; align-items: flex-start; }
         .chat-author { font-weight: bold; color: var(--primary); display: block; font-size: 0.85em; margin-bottom: 3px; }
         .chat-text { color: var(--text-color); word-wrap: break-word; }
@@ -610,3 +616,56 @@ textarea { width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 10p
             font-weight: bold;
             margin-left: 10px;
         }
+        /*tmp*/
+
+        .popup {   
+            position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  display: none; /* Caché par défaut */
+  z-index: 1000; /* Assure que la pop-up est au-dessus du contenu */
+}
+
+.popup h2 {
+  color: #2e7d32; /* Couleur verte de votre thème */
+  font-size: 2em;
+  margin-bottom: 15px;
+}
+
+.popup p {
+  font-size: 1.2em;
+}
+
+/* Bouton de fermeture (optionnel) */
+.close-popup {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+/* Effet de feu d'artifice (animation CSS basique) */
+.firework {
+  width: 5px;
+  height: 5px;
+  background-color: #f44336; /* Rouge */
+  border-radius: 50%;
+  position: absolute;
+  animation: firework 1s infinite linear;
+}
+
+@keyframes firework {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(10); opacity: 0; }
+}
+
+.firework-2 { background-color: #ffeb3b; animation-delay: 0.2s; left: 20%; top: 30%; }
+.firework-3 { background-color: #2196f3; animation-delay: 0.4s; right: 25%; top: 40%; }
+/* ... */
