@@ -545,19 +545,96 @@ textarea { width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 10p
     }
 }
         /* Styles pour la zone de messagerie */
-        .chat-layout { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 30px; }
-        .chat-section { background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: var(--shadow); position: relative; }
-        #chat-box { height: 350px; border: 1px solid #ddd; overflow-y: auto; padding: 15px; margin: 15px auto; background: #fcfcfc; border-radius: 8px; }
-        .chat-message { margin-bottom: 12px; padding: 10px; border-radius: 8px; background: #f1f0f0; display: flex; justify-content: space-between; align-items: flex-start; }
-        .chat-author { font-weight: bold; color: var(--primary); display: block; font-size: 0.85em; margin-bottom: 3px; }
-        .chat-text { color: var(--text-color); word-wrap: break-word; }
-        .chat-input-container { display: flex; gap: 8px; }
-        .chat-input-container input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 20px; outline: none; padding-left: 15px; }
-        .chat-input-container input:focus { border-color: var(--primary); }
-        
-        /* Message d'attention de la modération */
-        #chat-warning { display: none; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.9rem; text-align: center; font-weight: bold; }
+/* Le conteneur global du chat */
+.chat-layout { 
+    display: grid; 
+    grid-template-columns: 1fr; 
+    gap: 20px; 
+    margin-top: 30px;
+    width: 100%;
+    max-width: 1000px; /* 1. On limite la largeur maximale pour éviter l'effet "démesuré" */
+    margin-left: auto; /* Permet de centrer tout le bloc sur la page */
+    margin-right: auto;
+}
 
+.chat-section { 
+    background: var(--card-bg); 
+    padding: 25px; 
+    border-radius: 15px; 
+    box-shadow: var(--shadow); 
+    position: relative; 
+    box-sizing: border-box; /* Évite que le padding déforme la taille calculée */
+}
+
+/* La zone où les messages défilent */
+#chat-box { 
+    height: 350px; 
+    border: 1px solid #ddd; 
+    overflow-y: auto; 
+    padding: 15px; 
+    margin: 15px 0; /* 2. On enlève le "auto" horizontal ici, géré par le layout */
+    background: #fcfcfc; 
+    border-radius: 8px; 
+    box-sizing: border-box;
+}
+
+.chat-message { 
+    margin-bottom: 12px; 
+    padding: 10px; 
+    border-radius: 8px; 
+    background: #f1f0f0; 
+    display: flex; 
+    flex-direction: column; /* 3. Optionnel : empile l'auteur et le texte pour éviter l'étirement en largeur */
+    justify-content: space-between; 
+    align-items: flex-start; 
+}
+
+.chat-author { 
+    font-weight: bold; 
+    color: var(--primary); 
+    display: block; 
+    font-size: 0.85em; 
+    margin-bottom: 3px; 
+}
+
+.chat-text { 
+    color: var(--text-color); 
+    word-wrap: break-word; 
+    width: 100%; /* Force le texte à respecter la largeur du message */
+}
+
+.chat-input-container { 
+    display: flex; 
+    gap: 8px; 
+    width: 100%;
+}
+
+.chat-input-container input { 
+    flex: 1; 
+    padding: 12px; 
+    border: 1px solid #ccc; 
+    border-radius: 20px; 
+    outline: none; 
+    padding-left: 15px; 
+}
+
+.chat-input-container input:focus { 
+    border-color: var(--primary); 
+}
+
+/* Message d'attention de la modération */
+#chat-warning { 
+    display: none; 
+    color: #721c24; 
+    background-color: #f8d7da; 
+    border: 1px solid #f5c6cb; 
+    padding: 10px; 
+    border-radius: 8px; 
+    margin-bottom: 10px; 
+    font-size: 0.9rem; 
+    text-align: center; 
+    font-weight: bold; 
+}
         /* Zone admin modération */
         .admin-mod-header { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .admin-mod-title { color: #dc3545; font-size: 1.1rem; margin: 0; }
