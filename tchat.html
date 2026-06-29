@@ -221,8 +221,7 @@
         if (e.key === "Enter") sendChatMessage();
     });
     document.getElementById("admin-delete-all-btn").addEventListener("click", supprimerToutLeChat);
-
-    document.getElementById("btn-admin").addEventListener("click", abrirMdp);
+    document.getElementById("btn-admin").addEventListener("click", ouvrirMdp);
     document.getElementById("btn-valider-mdp").addEventListener("click", verifier);
     document.getElementById("mdp").addEventListener("keypress", (e) => {
         if (e.key === "Enter") verifier();
