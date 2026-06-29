@@ -1,5 +1,3 @@
-// sw.js
-
 self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
@@ -8,9 +6,9 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(clients.claim());
 });
 
-// Écoute les notifications envoyées par un serveur (Push)
+// ÉCOUTE DES NOTIFICATIONS EN ARRIÈRE-PLAN
 self.addEventListener('push', (event) => {
-    let data = { title: "Éco-Délégués", body: "Nouvel article disponible !" };
+    let data = { title: "Éco-Délégués H.R.", body: "Il y a du nouveau sur le blog !" };
     
     if (event.data) {
         try {
@@ -22,8 +20,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
         body: data.body,
-        icon: 'Picture/icone.png',
-        badge: 'Picture/icone.png',
+        icon: 'icone.png', // Assurez-vous que le chemin est correct
+        badge: 'icone.png',
         vibrate: [100, 50, 100],
         data: {
             url: data.url || 'actualite.html'
@@ -35,7 +33,7 @@ self.addEventListener('push', (event) => {
     );
 });
 
-// Gère le clic sur la notification
+// CLIC SUR LA NOTIFICATION
 self.addEventListener('notificationclick', (event) => {
     const notification = event.notification;
     const urlToOpen = new URL(notification.data?.url || 'actualite.html', self.location.origin).href;

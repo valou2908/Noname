@@ -20,7 +20,7 @@
 
 <header class="header">
     <h1>Espace Discussion</h1>
-    <p>Échangez anonymement et librement sur des soucis observés dans la cour</p>
+    <p>Échangez anonymement et librement sur des soucis observer dans la cour</p>
 </header>
 
 <main class="container">
@@ -48,7 +48,7 @@
     <div class="chat-layout">
         <section class="chat-section">
             <h2 style="margin-bottom: 15px;">Messagerie</h2>
-            <p>Cette messagerie publique et anonyme sert à signaler des comportements <strong>inappropriés au niveau écologique</strong> au sein du collège</p><br>
+            <p>Cette messagerie public et anonyme sert à signaler des comportement <strong>innaproprié au niveau écologiques</strong> au sain du collège</p>
             
             <div id="chat-warning">⚠️ Attention : Votre message contenait des propos inappropriés et a été censuré.</div>
             
@@ -78,13 +78,12 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
     import { getDatabase, ref, push, onValue, serverTimestamp, query, get, remove } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
     
-    // IMPORTATION DES MOTS DEPUIS VOTRE FICHIER SÉPARÉ
+    // IMPORTATION DES MOTS DEPUIS TON FICHIER SÉPARÉ
     import { motsInterdits } from "./mot_censured.js";
 
-    // Configuration Firebase officielle
+    // Configuration Firebase officielle de ton projet ecodeleguer-app
     const firebaseConfig = {
         apiKey: "AIzaSyAeAfkNfQHi3rRmWZifT6NQva6pW-AkzlU",
         authDomain: "ecodeleguer-app.firebaseapp.com",
@@ -96,16 +95,10 @@
         measurementId: "G-BY1ZYKBRC0"
     };
 
-    // Initialisation unique
+    // Initialisation
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const auth = getAuth(app);
     const messagesRef = ref(db, 'messages');
-
-    // Connexion anonyme automatique requise pour les règles
-    signInAnonymously(auth).catch((error) => {
-        console.error("Erreur d'authentification anonyme :", error);
-    });
 
     // Génération du pseudo de l'élève pour la session
     const anonymousName = "Anonyme_" + Math.floor(1000 + Math.random() * 9000);
@@ -202,11 +195,11 @@
         }
     }
 
-    // Supprimer un message un par un instantanément
+    // Supprimer un message un par un instantanément (Sans message de confirmation)
     function supprimerMessageUnique(messageId) {
         const specificRef = ref(db, `messages/${messageId}`);
         remove(specificRef).catch(() => {
-            alert("Erreur lors de la suppression. Vérifiez vos droits de modération.");
+            alert("Erreur lors de la suppression.");
         });
     }
 
@@ -222,7 +215,7 @@
     }
 
     /* --- SYSTÈME DE VÉRIFICATION DU MOT DE PASSE INTÉGRÉ --- */
-    const SECRET = "RWNvMjAyNS8yNg=="; // Code secret chiffré en Base64
+    const SECRET = "RWNvMjAyNS8yNg=="; // Ton code secret chiffré en Base64
 
     function ouvrirMdp() {
         document.getElementById("zone-mdp").style.display = "flex";

@@ -1,0 +1,327 @@
+<!DOCTYPE html> 
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="icone.png">
+    <title>Quiz</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+
+<nav class="nav-pc">
+    <a href="index.html">Accueil</a>
+    <a href="actualite.html">Actualité</a>
+    <a href="quiz.html" class="active">Quiz</a>
+    <a href="tchat.html">Discussion</a>
+    <a href="objectifs.html">Les objectifs</a>
+    <a href="noussommes.html">Qui sommes Nous ?</a>
+</nav>
+
+<header class="header">
+    <h1>Quiz</h1>
+    <p>Testez vos connaissances écologiques</p>
+</header>
+
+<main class="container">
+    <section class="card">
+        <h2>Espace Création</h2>
+        <p style="font-size: 0.9rem; color: #666;">Réservé aux membres des éco-délégués de H.R. pour créer et publier des questionnaires.</p>
+        <button class="btn" id="btn-admin" onclick="ouvrirMdp()" style="margin-top: 10px;">Créer un questionnaire</button>
+        
+        <div id="zone-mdp" style="display:none; margin-top:15px; gap: 10px; flex-wrap: wrap;">
+            <input type="password" id="mdp" placeholder="Code d'accès…" class="mdp-input">
+            <button class="btn" onclick="verifier()">Valider</button>
+        </div>
+            
+        <div id="zone-publi" style="display:none; margin-top:24px;">
+            <div class="generateur-header">
+                <h3>Générateur de Questionnaire</h3>
+            </div>
+
+            <div class="form-group">
+                <label for="quiz-title">Titre du quiz</label>
+                <input type="text" id="quiz-title" placeholder="Ex : Gestion de l'eau">
+            </div>
+
+            <div id="zone-questions-form"></div>
+
+            <div class="generateur-actions">
+                <button class="btn btn-add-question" onclick="ajouterNouvelleQuestionForm()">Ajouter une question</button>
+                <button class="btn btn-success" onclick="genererLeJSON()">Créer le code du Quiz</button>
+            </div>
+            
+            <div id="zone-json-output" style="display:none; margin-top:20px;">
+                <div class="json-output-header">Code généré</div>
+                <textarea id="json-output" readonly></textarea>
+                <p class="json-tip">
+                        Créez un fichier dans <code>quiz-data/</code> sur GitHub nommé <code id="exemple-nom">fichier.json</code> et collez ce texte dedans.
+                </p>
+                <a class="btn" href="https://github.com/valou2908/Ecollege-HR" target="_blank">Ouvrir le dépôt GitHub →</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="sect-liste">
+        <h2 style="margin-top: 30px; margin-bottom: 10px;">Choisissez un sujet</h2>
+        <div id="quiz-selection">
+            <p id="loading-text" style="color:#666; font-style:italic; padding: 10px;">Recherche des quiz en cours...</p>
+        </div>
+    </section>
+
+    <section id="sect-jeu" class="hidden">
+        <br>
+        <button class="btn" onclick="retourListe()" style="margin-bottom: 20px; background: #218838;">⬅ Retour aux sujets</button>
+        <div class="quiz-card">
+            <h2 id="jeu-titre-quiz" style="color:var(--primary); margin-bottom:10px;">Titre</h2>
+            <hr style="border:0; border-top: 1px solid #eee; margin-bottom: 15px;">
+            <div id="jeu-questions">
+                <h3 id="question-text" style="margin-bottom: 15px;">Chargement...</h3>
+                <ul class="options-list" id="options-container"></ul>
+                <button id="next-btn" class="btn hidden" onclick="prochaineQuestion()" style="width: 100%; margin-top: 10px;">Question suivante ➔</button>
+            </div>
+            <div id="jeu-resultat" class="hidden" style="text-align: center; padding: 20px 0;">
+                <h3 style="color: var(--primary); font-size: 1.6rem;">Quiz Terminé !</h3>
+                <p style="font-size: 1.3rem; margin: 15px 0;">Votre score : <strong id="user-score" style="color:var(--primary)">0</strong> / <strong id="total-questions">0</strong></p>
+                <button class="btn" onclick="recommencerQuiz()">Recommencer le test</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<nav class="nav-mobile">
+    <a href="index.html">🏠<br>Accueil</a>
+    <a href="actualite.html">💬<br>Actualité <span class="badge" style="display:none;">!</span></a>
+    <a href="quiz.html" class="active">❓<br>Quiz</a>
+    <a href="tchat.html">💬<br>Discussion</a>
+    <a href="objectifs.html">🏆<br>Objectifs</a>
+    <a href="noussommes.html" >👥<br>Qui sommes nous</a>
+</nav>
+
+<script>
+const SECRET = "RWNvMjAyNS8yNg=="; 
+const GITHUB_API_URL = "https://api.github.com/repos/valou2908/Ecollege-HR/contents/quiz-data";
+
+let quizActuelQuestions = [];
+let indexQuestion = 0;
+let score = 0;
+let compteurQuestionsForm = 0;
+
+function chargerListeQuizAutomatique() {
+    const zoneSelection = document.getElementById("quiz-selection");
+
+    fetch(GITHUB_API_URL)
+        .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+        .then(fichiers => {
+            const fichiersJson = fichiers.filter(f => f.name.endsWith('.json'));
+            
+            if (fichiersJson.length === 0) {
+                zoneSelection.innerHTML = "<p style='color:#666; font-style:italic; padding:10px;'>Aucun quiz disponible pour le moment.</p>";
+                return;
+            }
+
+            zoneSelection.innerHTML = ""; 
+
+            fichiersJson.forEach(fichier => {
+                let titrePropre = fichier.name.replace('.json', '').replace(/-/g, ' ');
+                titrePropre = titrePropre.charAt(0).toUpperCase() + titrePropre.slice(1);
+
+                const carte = document.createElement('article');
+                carte.className = 'quiz-item-btn'; 
+                carte.onclick = () => lancerLeQuiz(fichier.download_url, titrePropre);
+                carte.innerHTML = `<h3 style="color: var(--primary);">${titrePropre}</h3><span>S'évaluer ➔</span>`;
+                zoneSelection.appendChild(carte);
+            });
+        })
+        .catch(() => {
+           zoneSelection.innerHTML = "<p style='--primary-color: #28a745; color: var(--primary-color); padding: 10px;'>Impossible de charger les quiz (Vérifiez votre dossier 'quiz-data').</p>";
+        });
+}
+
+function lancerLeQuiz(urlFichier, titre) {
+    fetch(urlFichier)
+        .then(res => res.json())
+        .then(questions => {
+            quizActuelQuestions = questions;
+            indexQuestion = 0;
+            score = 0;
+
+            document.getElementById("sect-liste").classList.add("hidden");
+            document.getElementById("sect-jeu").classList.remove("hidden");
+            document.getElementById("jeu-titre-quiz").innerText = titre;
+            document.getElementById("jeu-questions").classList.remove("hidden");
+            document.getElementById("jeu-resultat").classList.add("hidden");
+
+            afficherQuestion();
+        })
+        .catch(() => { alert("Erreur lors du chargement des questions."); });
+}
+
+function afficherQuestion() {
+    document.getElementById("next-btn").classList.add("hidden");
+    const containerOptions = document.getElementById("options-container");
+    containerOptions.innerHTML = "";
+
+    const qData = quizActuelQuestions[indexQuestion];
+    document.getElementById("question-text").innerText = `${indexQuestion + 1}. ${qData.question}`;
+
+    qData.reponses.forEach((reponse, idx) => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.className = "btn-option";
+        btn.innerText = reponse;
+        btn.onclick = () => verifierReponse(idx, btn);
+        li.appendChild(btn);
+        containerOptions.appendChild(li);
+    });
+}
+
+function verifierReponse(idxChoisi, boutonClique) {
+    const qData = quizActuelQuestions[indexQuestion];
+    const tousLesBoutons = document.getElementById("options-container").querySelectorAll('button');
+
+    tousLesBoutons.forEach(b => b.disabled = true);
+
+    if (idxChoisi === qData.correcte) {
+        boutonClique.classList.add("option-correcte");
+        score++;
+    } else {
+        boutonClique.classList.add("option-fausse");
+        tousLesBoutons[qData.correcte].classList.add("option-correcte");
+    }
+    document.getElementById("next-btn").classList.remove("hidden");
+}
+
+function prochaineQuestion() {
+    indexQuestion++;
+    if (indexQuestion < quizActuelQuestions.length) {
+        afficherQuestion();
+    } else {
+        document.getElementById("jeu-questions").classList.add("hidden");
+        document.getElementById("jeu-resultat").classList.remove("hidden");
+        document.getElementById("user-score").innerText = score;
+        document.getElementById("total-questions").innerText = quizActuelQuestions.length;
+    }
+}
+
+function recommencerQuiz() {
+    indexQuestion = 0;
+    score = 0;
+    document.getElementById("jeu-questions").classList.remove("hidden");
+    document.getElementById("jeu-resultat").classList.add("hidden");
+    afficherQuestion();
+}
+
+function retourListe() {
+    document.getElementById("sect-liste").classList.remove("hidden");
+    document.getElementById("sect-jeu").classList.add("hidden");
+}
+
+function ouvrirMdp() {
+    document.getElementById("zone-mdp").style.display = "flex";
+    document.getElementById("btn-admin").style.display = "none";
+}
+
+function verifier() {
+    const input = document.getElementById("mdp").value;
+    if (btoa(input) === SECRET) {
+        document.getElementById("zone-publi").style.display = "block";
+        document.getElementById("zone-mdp").style.display = "none";
+        ajouterNouvelleQuestionForm();
+    } else { alert("Code incorrect"); }
+}
+
+function ajouterNouvelleQuestionForm() {
+    compteurQuestionsForm++;
+    const zone = document.getElementById("zone-questions-form");
+    const bloc = document.createElement("div");
+    bloc.className = "question-bloc";
+    bloc.id = `bloc-q-${compteurQuestionsForm}`;
+    
+    bloc.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong style="color:var(--primary); font-size:0.95rem;">Question n°${compteurQuestionsForm}</strong>
+            <button class="btn btn-danger" style="padding: 3px 8px; font-size:0.75rem;" onclick="document.getElementById('bloc-q-${compteurQuestionsForm}').remove()">Supprimer</button>
+        </div>
+        <div class="form-group"><input type="text" class="input-intitule" placeholder="Intitulé de la question"></div>
+        <div class="reponses-grid">
+            <div class="rep-item">
+                <label class="rep-label">Réponse 1</label>
+                <input type="text" class="input-rep-0" placeholder="Saisir la réponse…">
+            </div>
+            <div class="rep-item">
+                <label class="rep-label">Réponse 2</label>
+                <input type="text" class="input-rep-1" placeholder="Saisir la réponse…">
+            </div>
+            <div class="rep-item rep-optional">
+                <label class="rep-label rep-label-opt">Réponse 3 <span class="opt-tag">optionnel</span></label>
+                <input type="text" class="input-rep-2" placeholder="Saisir la réponse…">
+            </div>
+            <div class="rep-item rep-optional">
+                <label class="rep-label rep-label-opt">Réponse 4 <span class="opt-tag">optionnel</span></label>
+                <input type="text" class="input-rep-3" placeholder="Saisir la réponse…">
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0; display:flex; align-items:center; gap:10px;">
+            <label style="font-size:0.85rem; margin:0; white-space:nowrap; color: #28a745; font-weight: bold;">Bonne réponse :</label>
+            <select class="select-correcte" style="padding:5px; width:auto;">
+                <option value="0">Réponse 1</option>
+                <option value="1">Réponse 2</option>
+                <option value="2">Réponse 3</option>
+                <option value="3">Réponse 4</option>
+            </select>
+        </div>
+    `;
+    zone.appendChild(bloc);
+}
+
+function genererLeJSON() {
+    const titre = document.getElementById("quiz-title").value.trim();
+    const blocs = document.querySelectorAll(".question-bloc");
+    
+    if (!titre || blocs.length === 0) {
+        alert("Veuillez renseigner un titre et au moins une question.");
+        return;
+    }
+
+    let questionsData = [];
+    let valide = true;
+
+    blocs.forEach(bloc => {
+        const intitule = bloc.querySelector(".input-intitule").value.trim();
+        const r0 = bloc.querySelector(".input-rep-0").value.trim();
+        const r1 = bloc.querySelector(".input-rep-1").value.trim();
+        const r2 = bloc.querySelector(".input-rep-2").value.trim();
+        const r3 = bloc.querySelector(".input-rep-3").value.trim();
+        const correcte = parseInt(bloc.querySelector(".select-correcte").value);
+
+        if (!intitule || !r0 || !r1) { valide = false; return; }
+
+        let reps = [r0, r1];
+        if (r2) reps.push(r2);
+        if (r3) reps.push(r3);
+
+        if (correcte >= reps.length) { valide = false; return; }
+        questionsData.push({ question: intitule, reponses: reps, correcte: correcte });
+    });
+
+    if (!valide) {
+        alert("Erreur de saisie : vérifiez que les intitulés et les réponses obligatoires sont remplis.");
+        return;
+    }
+
+    const outputZone = document.getElementById("zone-json-output");
+    const outputText = document.getElementById("json-output");
+    
+    outputText.value = JSON.stringify(questionsData, null, 4);
+    const nomFichier = titre.toLowerCase().trim().replace(/[^a-z0-9]/g, '-') + ".json";
+    document.getElementById("exemple-nom").innerText = nomFichier;
+    
+    outputZone.style.display = "block";
+    outputText.select();
+}
+
+window.onload = () => { chargerListeQuizAutomatique(); };
+</script>
+</body>
+</html>
