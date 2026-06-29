@@ -552,7 +552,7 @@ textarea { width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 10p
     gap: 20px; 
     margin-top: 30px;
     width: 100%;
-    max-width: 1000px; /* 1. On limite la largeur maximale pour éviter l'effet "démesuré" */
+    max-width: 1000px auto; /* 1. On limite la largeur maximale pour éviter l'effet "démesuré" */
     margin-left: auto; /* Permet de centrer tout le bloc sur la page */
     margin-right: auto;
 }
